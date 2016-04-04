@@ -1,0 +1,7 @@
+#!/bin/bash
+
+BRIGHTRAW=$(xbacklight -get)
+
+printf "%.f" $BRIGHTRAW
+
+echo -n "%"

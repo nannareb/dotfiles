@@ -1,0 +1,6 @@
+#!/bin/bash
+address="${BLOCK_INSTANCE}"
+
+PING=$(ping -c 1 $address | tail -n1 | awk '{ print $4}')
+AVG=$(echo $PING | tr "/" "\n" | head -n2 | tail -n1)
+echo $AVG

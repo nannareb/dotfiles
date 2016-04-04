@@ -1,0 +1,23 @@
+#!/bin/bash
+ICON=$HOME/.xlock/icon.png
+TMPBG=/tmp/screen.png
+LOCKSIZEX=$(identify $ICON | awk '{ print $3}' | tr "x" "\n" | head -n1)
+LOCKSIZEY=$(identify $ICON | awk '{ print $3}' | tr "x" "\n" | head -n2 | tail -n1)
+scrot $TMPBG
+#convert $TMPBG -scale 10% -scale 1000% $TMPBG # --for pixelate
+convert $TMPBG -gaussian-blur 8x8 $TMPBG # --for blur
+#convert $TMPBG $ICON -gravity center -composite -matte $TMPBG #use this for single monitor
+PRIMARYLOC=$(xrandr --query | grep primary | awk '{ print $4}')
+PRIMARYPOSX=$(echo $PRIMARYLOC | tr "x" "\n" | head -n1)
+PRIMARYPOSY=$(echo $PRIMARYLOC | tr "x" "\n" | tr "+" "\n" | head -n2 | tail -n1)
+PRIMARYX=$(echo $PRIMARYLOC | tr "x" "\n" | tr "+" "\n" | head -n3 | tail -n1)
+PRIMARYY=$(echo $PRIMARYLOC | tr "x" "\n" | tr "+" "\n" | head -n4 | tail -n1)
+#echo "primary: " $PRIMARYPOSX " X " $PRIMARYPOSY " + " $PRIMARYX " + " $PRIMARYY
+
+GEOX=$(($PRIMARYPOSX + $PRIMARYX))
+GEOY=$(($PRIMARYPOSY + $PRIMARYY))
+FINALX=$((($GEOX / 2) - ($LOCKSIZEX / 2)))
+FINALY=$((($GEOY / 2) - ($LOCKSIZEY / 2)))
+#echo "GEO: " $FINALX " X " $FINALY
+convert $TMPBG $ICON -geometry +$FINALX+$FINALY -composite -matte $TMPBG
+i3lock -u -i $TMPBG

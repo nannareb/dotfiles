@@ -1,0 +1,11 @@
+#!/bin/bash
+## Simple batch rename script, usage:
+## bashrename [delimiter] [rootdirectory]
+## bashrename ~ /mnt/array
+TO_RENAME_TEMP=/tmp/directories.tmp
+
+arr=$(echo $@ | tr " " "\n");
+for x in $arr
+do
+	echo "> [$x]"
+done
