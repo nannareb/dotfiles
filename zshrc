@@ -1,9 +1,9 @@
 # Path to your oh-my-zsh installation.
-  export ZSH=/home/kbrennan/.oh-my-zsh
+  export ZSH=$HOME/.oh-my-zsh
 
 export EDITOR="nano"
 
-DEFAULT_USER="kbrennan"
+DEFAULT_USER="$(whoami)"
 
 # Set name of the theme to load.
 # Look in ~/.oh-my-zsh/themes/
@@ -85,5 +85,5 @@ source $ZSH/oh-my-zsh.sh
 # For a full list of active aliases, run `alias`.
 #
 # Example aliases
-alias zshconfig="nano ~/.zshrc"
-alias ohmyzsh="nano ~/.oh-my-zsh"
+#alias zshconfig="nano ~/.zshrc"
+#alias ohmyzsh="nano ~/.oh-my-zsh"
