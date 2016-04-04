@@ -1,0 +1,202 @@
+#!/bin/bash
+
+cfg_tmp=/tmp
+mode=blur
+cfg_pixelate_scale=10
+cfg_blur_scale="8x8"
+cfg_lock_icon=~/.xlock/icon.png
+cfg_tint_opts=x640064
+cfg_oil_paint_opts=10
+cfg_sepia_opts=15
+cfg_swirl_opts=750
+cfg_implode_opts=2
+
+geo_icon_x=512
+geo_icon_y=512
+geo_primary_pos_x=0
+geo_primary_pos_y=0
+geo_primary_size_x=1920
+geo_primary_size_y=1080
+
+run_sepia=0
+run_oil_paint=0
+run_tint=0
+
+printhelp() {
+echo " i3lock-screenshot v0.1.1"
+echo " Usage: "
+echo "     -h | --help        Display this help message."
+echo "     -m | --mode        set the mode"
+echo "     -d | --tmpdir      set the temp directory"
+echo "     -p | --pixelize    set the pixelize scale"
+echo "     -b | --blur        set the blur scale"
+echo "     -i | --icon        Set the lock icon"
+echo "     -t | --tint        Tint the background image"
+echo "     -o | --oil-paint   Apply an oil-painted effect"
+echo "     -s | --sepia       Apply a Sepia effect"
+echo "          --swirl       Set the swirl scale"
+echo "          --implode     Set the implode scale"
+echo ""
+echo ""
+echo "  Modes:"
+echo "     blur"
+echo "     pixelize"
+echo "     static"
+echo "     swirl"
+echo "     implode"
+echo "     "
+}
+
+doLock() {
+	i3lock -u -i $cfg_tmp/screen.png
+}
+
+sepia() {
+	convert $cfg_tmp/screen.png -sepia-tone $cfg_sepia_opts% $cfg_tmp/screen.png
+	echo "Sepia'd"
+}
+
+tint() {
+	convert $cfg_tmp/screen.png -tint $cfg_tint_opts $cfg_tmp/screen.png
+	echo "Tinted"
+}
+oilPaint() {
+	convert $cfg_tmp/screen.png -paint $cfg_oil_paint_opts $cfg_tmp/screen.png
+	echo "Oiled"
+}
+
+blur() {
+	convert $cfg_tmp/screen.png -gaussian-blur $cfg_blur_scale $cfg_tmp/screen.png
+	echo "Blurred"
+}
+
+pixelate() {
+	downsample=$(( 100/cfg_pixelate_scale ))
+	upsample=$(( ( 100/cfg_pixelate_scale ) * cfg_pixelate_scale * cfg_pixelate_scale ))
+	convert $cfg_tmp/screen.png -scale "$downsample"% -scale "$upsample"% $cfg_tmp/screen.png
+	echo "Pixelated"
+}
+
+static() {
+	echo "Static image is Not Yet Supported"
+}
+
+swirl() {
+	convert $cfg_tmp/screen.png -swirl $cfg_swirl_opts $cfg_tmp/screen.png
+	echo "Swirled"
+}
+
+implode() {
+	convert $cfg_tmp/screen.png -implode $cfg_implode_opts $cfg_tmp/screen.png
+	echo "imploded"
+}
+
+getScreenGeometry() {
+	PRIMARYLOC=$(xrandr --query | grep primary | awk '{ print $4}')
+	if [[ -z "$PRIMARYLOC" ]]; then
+		PRIMARYLOC=$(xrandr --query | grep connected | head -n1 | awk '{print $3}')
+	fi
+	geo_primary_size_x=$(echo $PRIMARYLOC | tr "x" "\n" | head -n1)
+	geo_primary_size_y=$(echo $PRIMARYLOC | tr "x" "\n" | tr "+" "\n" | head -n2 | tail -n1)
+	geo_primary_pos_x=$(echo $PRIMARYLOC | tr "x" "\n" | tr "+" "\n" | head -n3 | tail -n1)
+	geo_primary_pos_y=$(echo $PRIMARYLOC | tr "x" "\n" | tr "+" "\n" | head -n4 | tail -n1)
+}
+
+getIconGeometry() {
+	geo_icon_x=$(identify $cfg_lock_icon | awk '{ print $3}' | tr "x" "\n" | head -n1)
+	geo_icon_y=$(identify $cfg_lock_icon | awk '{ print $3}' | tr "x" "\n" | head -n2 | tail -n1)
+}
+
+addIcon() {
+	geo_primary_center_x=$((($geo_primary_size_x / 2)))
+	geo_primary_center_y=$((($geo_primary_size_y / 2)))
+	geo_primary_abs_center_x=$(($geo_primary_pos_x + $geo_primary_center_x))
+	geo_primary_abs_center_y=$(($geo_primary_pos_y + $geo_primary_center_y))
+	geo_icon_center_x=$(($geo_icon_x / 2))
+	geo_icon_center_y=$(($geo_icon_y / 2))
+	icon_geo_x=$((($geo_primary_abs_center_x - $geo_icon_center_x)))
+	icon_geo_y=$((($geo_primary_abs_center_y - $geo_icon_center_y)))
+#	echo $geo_primary_center_x
+#	echo $geo_primary_center_y
+#	echo $geo_primary_abs_center_x
+#	echo $geo_primary_abs_center_y
+#	echo $icon_geo_x
+#	echo $icon_geo_y
+	convert $cfg_tmp/screen.png $cfg_lock_icon -geometry +$icon_geo_x+$icon_geo_y -composite -matte $cfg_tmp/screen.png
+}
+
+getScreen() {
+	scrot $cfg_tmp/screen.png
+}
+
+if [ $# -eq 0 ]; then
+	echo "Error: No arguments provided"
+	printhelp
+	exit 0
+fi
+
+while (( $# )); do
+	case "$1" in
+		--help|-h) printhelp; exit 0 ;;
+		--mode|-m) mode=$2; static_img=$3; shift;;
+		--blur|-b) cfg_blur_scale=$2; shift;;
+		--pixelize|-p) cfg_pixelate_scale=$2; shift;;
+		--swirl) cfg_swirl_opts=$2; shift;;
+		--implode) cfg_implode_opts=$2; shift;;
+		--tmpdir|-d) cfg_tmp=$2; shift;;
+		--icon|-i) cfg_lock_icon=$2; shift;;
+		--tint|-t) cfg_tint_opts=$2; run_tint=1; shift;;
+		--oil-paint|-o) cfg_oil_paint_opts=$2; run_oil_paint=1; shift;;
+		--sepia|-s) cfg_sepia_opts=$2; run_sepia=1; shift;;
+		
+		--) shift; break;;
+		-*)
+			print "Unknown key: $1"
+			printhelp
+			exit 1
+		;;
+		
+		*) break;;
+	esac
+	shift
+done
+
+getScreen
+getScreenGeometry
+getIconGeometry
+case "$mode" in
+	blur)
+		blur
+	;;
+	pixelize)
+		pixelate
+	;;
+	static)
+		static
+	;;
+	swirl)
+		cfg_blur_scale="8x8"
+		blur
+		swirl
+	;;
+	implode)
+		implode
+	;;
+	*)
+		blur
+	;;
+esac
+if [ $run_oil_paint = 1 ]; then
+	oilPaint
+fi
+if [ $run_sepia = 1 ]; then
+	sepia
+fi
+if [ $run_tint = 1 ]; then
+	tint
+fi
+if [ -f $cfg_lock_icon ]; then
+	addIcon
+fi
+
+doLock

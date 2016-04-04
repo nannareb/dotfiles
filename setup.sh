@@ -21,3 +21,7 @@ ln -sv $DOTFILES/zshrc ~/.zshrc
 #bin
 rm -rf ~/bin
 ln -sv $DOTFILES/bin ~/bin
+
+#.nanorc
+rm -rf ~/.nanorc
+ln -sv $DOTFILES/nanorc ~/.nanorc
